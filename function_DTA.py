@@ -1,3 +1,30 @@
+# DTA Toolkit
+#
+# A data transformation algebra Toolkit for improved
+# data cleaning provenance
+#
+#  Lan Li, Santiago Nunez-Corrales
+# Supervisor: Bertram Ludaescher, CIRSS-iSchool
+
+# Separation of concerns
+#
+# 1. How to represent datasets
+#   1.1. How to decouple our model from the usual table/db model
+#       - Only using Pandas to load and save data
+#           * read_csv, write_csv
+#           * structure S to Pandas dataframe
+#       - Introspection:
+#           * the ability to see all components of a dataset
+#           * obtain individual values
+#           * obtain multiple values
+#           * obtain the signature of its corresponding ds space
+# 2. How to represent and construct data transformations
+#   2.1. How to construct cell transformations (Eq. 17)
+#   2.2. How to use cell transformations to construct dataset transformations (Eq. 18)
+#   2.3. Testing transformations
+#       * Signature
+#       * Is Delta an identity? For which dataset space (a.k.a. do signature match)? (Eq. 14)
+
 import csv
 from collections import Counter
 
@@ -12,8 +39,7 @@ class cell:
 
     pass
 
-
-class Operation:
+class Transformation:
     # 定义了什么操作：传入一个数据集， 通过这个大函数 能得到另外一个数据集
     # 对于任意一个OPERATION集合路径，都可以调用 split-simplify-.py
     # 有几个OPERATION就写几个函数； 而且这里的OPS都是大OP（需要细分）, 必须要调用BASE OP
@@ -33,8 +59,63 @@ class Operation:
     # OP1 / OP2 / OP3
     # BASE OP （要么对行， 要么对列， 要么对整体 （乘法），第I,J先不管）: 其他OP基于BASE OP
 
-    def __init__(self):
-        self.D=pd.DataFrame() # initialize new data frame
+    def __init__(self, sig=None, phi=None, 
+                    pi=None, p=None, restrictions=None):
+        self.signature = sig
+        self._cell_impl = self._cell_transformation(phi, pi, p)
+        self._implementation = self._ds_transformation(self.cell_impl, restrictions)
+        self.is_identity = False
+
+    # Eq. 12
+    def __init__(self, dataset):
+        self.signature = dataset.signature
+        self._cell_impl = self._cell_transformation(self._identity_phi,
+                                                    self._identity_pi,
+                                                    self._identity_p)
+        self._implementation = self._ds_transformation(self.cell_impl,
+                                                        (dataset.I, dataset.J))
+        self.is_identity = True
+
+    # (c, (i,j))
+    def _cell_transformation(self, phi, pi, p):
+        pass
+
+    def _ds_transformation(self, cell_trans, restrictions):
+        pass
+
+    def apply(self, dataset):
+        if self._test_signature(self, dataset):
+            pass
+        else:
+            # Raise error
+            pass
+
+    def _test_signature(self, dataset):
+        if self.signature == dataset.signature:
+            return True
+        else:
+            # Raise an error: incompatible signatures for transformation
+            return False
+
+    # Eq. (13)
+    def compose(self, other):
+        # TODO: implement this first
+        # What needs to happen:
+        #   * 
+        pass
+
+    # Additional helper functions
+    @staticmethod
+    def _identity_phi(content):
+        return content
+
+    @staticmethod
+    def _identity_pi(i, j):
+        return  i, j
+    
+    @staticmethod
+    def _identity_p(c):
+        True
 
     def pd_csv(self,data_p):
         self.D = pd.read_csv(data_p)
@@ -119,7 +200,7 @@ class Operation:
         pass
 
 
-class DTA:
+class Dataset:
     '''
     存储数据，只做内部转换
     函数写外面，2个DTA??
@@ -128,15 +209,20 @@ class DTA:
     def __init__(self):
         # 传入数据集，
         # five parameters for dataset
-        self.R= dict() # regular expression for each column
-        self.L=Counter() # (value, count)
-        self.I=set() # row set
-        self.J=set() # column set
-        self.S={} # structuring func: content -> row&col indices
+        self.R = dict() # regular expression for each column
+        self.C = dict() # (content, frequency)
+        self.I = set() # row set
+        self.J = set() # column set
+        self.S = dict() # element from C -> pairs from I x J
         self.data_space=set() # current dataset
 
-    def data_regex(self,data_p):
+    def equivalent(self, dataset):
+        pass
 
+    def equal(self, dataset):
+        pass
+
+    def data_regex(self,data_p):
         return self.R
 
     def data_content(self,data_p):
@@ -170,10 +256,31 @@ class DTA:
     def dataset_space(self):
         self.D = (self.R, self.L, self.S, self.I, self.J)
 
+    # Helper function
 
-class Toolkit:
-    def __init__(self):
+    # CSV file
+    # -> load using Pandas (DataFrame)
+    # -> create new dataset (our model: R, C, I, J, S)
+    # -> trasformations
+    # ...
+    # -> transformations
+    # -> migrate our model to a DataFrame
+    # -> save DataFrame to csv
+    def _csv_to_dataset(self):
         pass
+
+    def _dataset_to_dframe(self):
+        pass
+
+
+class DTAToolkit:
+    def __init__(self, filename, savecurrent=False):
+        self._source_file = filename
+        self._trans_history = []
+        self._save_curr = savecurrent
+        self._most_recent = -1
+        self._prev = None
+        self._curr = None
 
     def signature_set(self,prev_data_sp, cur_data_sp):
         # return difference in data spaces of ops-
@@ -194,22 +301,48 @@ class Toolkit:
 
         return sig_set
 
-    def shallow_trans(self,sig_set):
-        '''
-        input signature set
-        :return: boolean
-        '''
-
+    def load_prev(self, filename):
         pass
 
-    def deep_trans(self):
+    def switch_save_mode(self):
+        self._save_curr = not(self._save_curr)
+
+
+    def add_transformation(self, delta):
+        self._trans_history.append(delta)
+
+    def apply_history(self):
+        return self.apply_to_kth_history(self, len(self._trans_history))
         pass
 
-    def identity_trans(self):
+    def apply_to_kth_history(self, k):
+        if k < 0:
+            return self._prev
+        elif k >= len(self._trans_history):
+            composition = self._compose(0, len(self._trans_history))
+            ds = composition.apply(self._prev)
+
+            self._most_recent = len(self._trans_history) - 1
+
+            if self._save_curr:
+                self._curr = ds
+
+            return ds
+        else:
+            composition = self._compose(0, k)
+            ds = composition.apply(self._prev)
+            
+            self._most_recent = k
+
+            if self._save_curr:
+                self._curr = ds
+
+            return ds
+
+    def step(self):
         pass
 
-    def equal(self):
-        # two data spaces are equal
+    def _compose(self, i, j):
         pass
 
 
