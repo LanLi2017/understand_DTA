@@ -32,13 +32,6 @@ import numpy as np
 import pandas as pd
 
 
-class cell:
-    def __init__(self):
-        pass
-
-
-    pass
-
 class Transformation:
     # 定义了什么操作：传入一个数据集， 通过这个大函数 能得到另外一个数据集
     # 对于任意一个OPERATION集合路径，都可以调用 split-simplify-.py
@@ -59,12 +52,12 @@ class Transformation:
     # OP1 / OP2 / OP3
     # BASE OP （要么对行， 要么对列， 要么对整体 （乘法），第I,J先不管）: 其他OP基于BASE OP
 
-    def __init__(self, sig=None, phi=None, 
-                    pi=None, p=None, restrictions=None):
-        self.signature = sig
-        self._cell_impl = self._cell_transformation(phi, pi, p)
-        self._implementation = self._ds_transformation(self.cell_impl, restrictions)
-        self.is_identity = False
+    # def __init__(self, sig=None, phi=None,
+    #                 pi=None, p=None, restrictions=None):
+    #     self.signature = sig
+    #     self._cell_impl = self._cell_transformation(phi, pi, p)
+    #     self._implementation = self._ds_transformation(self.cell_impl, restrictions)
+    #     self.is_identity = False
 
     # Eq. 12
     def __init__(self, dataset):
@@ -84,7 +77,7 @@ class Transformation:
         pass
 
     def apply(self, dataset):
-        if self._test_signature(self, dataset):
+        if self._test_signature(dataset):
             pass
         else:
             # Raise error
@@ -111,11 +104,11 @@ class Transformation:
 
     @staticmethod
     def _identity_pi(i, j):
-        return  i, j
+        return i, j
     
     @staticmethod
     def _identity_p(c):
-        True
+        return True
 
     def pd_csv(self,data_p):
         self.D = pd.read_csv(data_p)
@@ -305,14 +298,13 @@ class DTAToolkit:
         pass
 
     def switch_save_mode(self):
-        self._save_curr = not(self._save_curr)
-
+        self._save_curr = not self._save_curr
 
     def add_transformation(self, delta):
         self._trans_history.append(delta)
 
     def apply_history(self):
-        return self.apply_to_kth_history(self, len(self._trans_history))
+        return self.apply_to_kth_history(len(self._trans_history))
         pass
 
     def apply_to_kth_history(self, k):
@@ -343,13 +335,5 @@ class DTAToolkit:
         pass
 
     def _compose(self, i, j):
-        pass
+        return
 
-
-def main():
-    data_p=''
-    pass
-
-
-if __name__=='__main__':
-    main()
