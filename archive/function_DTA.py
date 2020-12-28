@@ -33,25 +33,6 @@ import pandas as pd
 
 
 class Transformation:
-    # 定义了什么操作：传入一个数据集， 通过这个大函数 能得到另外一个数据集
-    # 对于任意一个OPERATION集合路径，都可以调用 split-simplify-.py
-    # 有几个OPERATION就写几个函数； 而且这里的OPS都是大OP（需要细分）, 必须要调用BASE OP
-    # 细分路径 -> BASE_OP
-
-    # OP1 -> OP2 -> OP3 (ori)
-    # OP1 -> OP3 -> OP2
-    # OP2 -> OP1 -> OP3  (OP1 AND OP3 dependency)
-    # enumeration (ALL relationship of transformations)-> EQUAL (路径)
-    # FUNC: 判断是否是相同效果路径
-    # 1. INPUT 数据集+路径--》 看结果判断是否相同
-    # 优化： 作弊：数据本身的关系/
-    # 1.解决方法： 虚拟数据集（10个）来判断： 减少因为真实数据本身产生问题； 减少数据的大小
-    # 缺点： 和真实数据之间的区别造成转化不能操作，不能完全模拟
-    # 2.解决方法： 简化排序： 提出所有小操作，然后增加； OP1 和 OP2, 分别拆分（）和排序（比如COLUMN INDEX）
-    # (1,3) (2)
-    # OP1 / OP2 / OP3
-    # BASE OP （要么对行， 要么对列， 要么对整体 （乘法），第I,J先不管）: 其他OP基于BASE OP
-
     # def __init__(self, sig=None, phi=None,
     #                 pi=None, p=None, restrictions=None):
     #     self.signature = sig
@@ -65,16 +46,16 @@ class Transformation:
         self._cell_impl = self._cell_transformation(self._identity_phi,
                                                     self._identity_pi,
                                                     self._identity_p)
-        self._implementation = self._ds_transformation(self.cell_impl,
+        self._implementation = self._ds_transformation(self._cell_impl,
                                                         (dataset.I, dataset.J))
         self.is_identity = True
 
     # (c, (i,j))
     def _cell_transformation(self, phi, pi, p):
-        pass
+        return 0
 
     def _ds_transformation(self, cell_trans, restrictions):
-        pass
+        return 0
 
     def apply(self, dataset):
         if self._test_signature(dataset):
